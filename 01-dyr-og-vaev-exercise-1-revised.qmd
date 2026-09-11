@@ -31,27 +31,28 @@ By the end of the activity, you should be able to:
 ## Download the course files
 
 During the first 15 minutes, create an account at
-[Posit Cloud](https://posit.cloud/) and sign in. We will use the **usethis**
-package to download the activity and data from GitHub.
+[Posit Cloud](https://posit.cloud/) and sign in.
 
-Run the following code in the R console, replacing the text with the URL given
-by your instructor:
+Once signed in, locate the **New Project** button in the top right corner, and click on it.
+Select the **New Project from Git Repository** option. You will then be prompted to provide the URL of the Git repository. Enter the following url exactly:
 
+> https://github.com/anivet-teaching/dyr-og-vaev-fish-hearts
+
+Now click OK. This will spin up a new RStdudio project in the cloud replete with the files needed for the activity today.
+
+Next, we need some R packages. Locate the the Console; it should be the window on the left of the screen. At the R prompt `>`, paste the line of code below and press <kbd>Enter</kbd> (<kbd>Return</kbd>):
 ```{r}
 #| eval: false
-library("usethis")
-
-use_course("https://github.com/anivet-teaching/dyr-og-vaev-fish-hearts/archive/refs/heads/main.zip")
+install.packages(c("usethis", "rmarkdown", "readxl", "ggplot2", "dplyr"))
 ```
 
-When R asks whether you want to continue, choose the affirmative response. If a
-new RStudio session does not open automatically, follow the instructions printed
-in the console.
+This will take a minute or two to download and install the relevant R packages and their dependencies.
 
 ## Open the activity and create your script
 
-Open this `.qmd` file in the downloaded project and click **Render**. The
-rendered activity will open in RStudio's Viewer. Use that page as your
+Locate the Files pane; it should be in the lower right portion of the screen.
+Open this `.qmd` file in the downloaded project; the file will open above the Console. Look carefully at this window and you'll see a light blue arrow next to the word **Render**. Next this you'll see a small gear or cog icon that looks a bit like this ⚙️. Locate this ⚙️ button and click it. Select the option **Preview in Viewer Pane**. Then click **Render**. The
+rendered activity will open in RStudio's Viewer pane which will pop up where the Files pane used to be. Use that page as your
 instruction sheet.
 
 Next, create the script in which you will do your analysis:
