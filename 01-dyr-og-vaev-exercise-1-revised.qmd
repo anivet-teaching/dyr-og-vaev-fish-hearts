@@ -1,0 +1,432 @@
+---
+title: "Fish heart activity"
+author: Gavin L. Simpson
+monobackgroundcolor: "white"
+format:
+  html:
+    toc: true
+    html-math-method: katex
+    embed-resources: true
+    code-line-numbers: false
+knitr:
+  opts_chunk:
+    echo: true
+    fig.align: center
+highlight-style: github-dark
+---
+
+In this activity, you will use R to work with measurements collected during the
+fish heart practical. You will first summarise the repeated measurements of your
+chosen fish heart from the 2025 class. You will then repeat the calculation for
+every recorded fish, summarise the available class data, and visualise the
+results.
+
+By the end of the activity, you should be able to:
+
+* select observations using `filter()`,
+* calculate a mean, standard deviation, and variance using `summarise()`,
+* use `group_by()` to calculate summaries for several fish, and
+* create and interpret simple plots using **ggplot2**.
+
+## Download the course files
+
+During the first 15 minutes, create an account at
+[Posit Cloud](https://posit.cloud/) and sign in. We will use the **usethis**
+package to download the activity and data from GitHub.
+
+Run the following code in the R console, replacing the text with the URL given
+by your instructor:
+
+```{r}
+#| eval: false
+library("usethis")
+
+use_course("PASTE THE COURSE URL HERE")
+```
+
+When R asks whether you want to continue, choose the affirmative response. If a
+new RStudio session does not open automatically, follow the instructions printed
+in the console.
+
+## Open the activity and create your script
+
+Open this `.qmd` file in the downloaded project and click **Render**. The
+rendered activity will open in RStudio's Viewer. Use that page as your
+instruction sheet.
+
+Next, create the script in which you will do your analysis:
+
+1. Click the small `+` icon in the top-left corner and select `R Script`, or use
+   `File` > `New File` > `R Script`.
+2. Save the script as `fish-heart-analysis.R`. The `.R` extension is important.
+3. Follow the rendered activity and type the requested code into your script.
+4. Run a line or selection from the script with <kbd>Ctrl</kbd> +
+   <kbd>Enter</kbd> on Windows or <kbd>Cmd</kbd> + <kbd>Enter</kbd> on macOS.
+
+::: {.callout-important}
+The rendered activity is your instruction sheet. Type and run the analysis code
+in `fish-heart-analysis.R`; do not edit or run the code chunks in the `.qmd`
+file during the activity.
+:::
+
+::: {.callout-tip}
+### Reuse your code
+
+You do not need to retype code that you have already entered. When a later task
+builds on an earlier one, you can copy and paste your existing code within your
+script and then change or extend the copied version. This avoids repeatedly
+typing the parts of the analysis that stay the same.
+:::
+
+## About the data
+
+The data were collected by veterinary medicine students during the 2025 fish
+heart practical. Students worked in pairs and repeatedly weighed the same fish
+heart. The repeated values therefore describe repeated measurements of one
+heart, not different hearts.
+
+Some paper data sheets were unavailable when the results were entered
+electronically. Consequently, the electronic dataset does not contain every
+fish examined during the practical, and the fish numbers are not consecutive.
+Most recorded fish have six measurements, but one has five. This might happen
+if a group did not complete the protocol, ran out of time, or if part of its
+record was unavailable. We will analyse the measurements that were recorded;
+we will not fill in or renumber missing records.
+
+The workbook contains two sheets:
+
+1. `fish-meta`, containing information about the fish; and
+2. `fish-weight`, containing the repeated heart-mass measurements.
+
+Today we need only `fish-weight`. We will learn how to join the two sheets in
+the follow-up exercise next week.
+
+## Load packages
+
+We need three packages for the analysis. The **readxl** package imports the
+Excel data, **dplyr** provides data-wrangling functions, and **ggplot2** creates
+plots.
+
+```{r}
+#| message: false
+library("readxl")
+library("dplyr")
+library("ggplot2")
+```
+
+## Read and inspect the measurements
+
+Use `read_excel()` to import the `fish-weight` sheet. The data workbook is in
+the `2025` folder within the downloaded course files.
+
+```{r}
+heart_raw <- read_excel(
+  "fish-heart-weight.xlsx",
+  sheet = "fish-weight"
+)
+
+heart_raw
+```
+
+This is a data frame: R's version of a rectangular data table. Its columns are
+variables and its rows are observations.
+
+Before continuing, discuss these questions with your partner:
+
+1. What does one row represent?
+2. Which column identifies the fish?
+3. Which column contains the heart-mass measurement?
+4. How many rows and columns are in the data?
+
+For today's activity, we only need the fish identifier and heart-mass
+measurement. We use `select()` to keep those variables and `rename()` to give
+the measurement a more informative name. Heart mass is measured in grams.
+
+```{r}
+heart <- heart_raw |>
+  select(fish_number, observation) |>
+  rename(heart_mass_g = observation)
+
+heart
+```
+
+The `|>` symbol is called the **pipe**. When reading the code, think of it as
+meaning “and then”. We take `heart_raw`, and then select two variables, and then
+rename one of them.
+
+## Choose a fish from the 2025 class
+
+You are **not** selecting the fish that you measured in today's practical.
+Instead, imagine that you were a student in the 2025 class and choose one of
+the fish recorded by a pair last year.
+
+First, ask R to show the available fish numbers:
+
+```{r}
+sort(unique(heart$fish_number))
+```
+
+Choose one of the displayed numbers. In the code below, replace `___` with that
+number. Do not put quotation marks around the fish number.
+
+```{r}
+#| eval: false
+chosen_fish <- ___
+```
+
+The rendered example uses fish 12 from this point onwards so that you can see
+complete example output. In your own script, continue using the fish number you
+chose above. Your measurements and summary values may therefore differ from the
+ones shown here.
+
+```{r}
+#| include: false
+chosen_fish <- 12
+```
+
+Use `filter()` to keep only measurements belonging to that fish:
+
+```{r}
+chosen_measurements <- heart |>
+  filter(fish_number == chosen_fish)
+
+chosen_measurements
+```
+
+Check the result before calculating a summary:
+
+* Does every row have your chosen fish number?
+* How many measurements were recorded?
+* Are the measurements identical, or do they vary?
+
+::: {.callout-warning}
+If the result contains zero rows, check that `chosen_fish` contains one of the
+fish numbers displayed by R. Not every fish's data sheet was available for
+electronic entry.
+:::
+
+## Summarise your chosen fish
+
+The mean describes the centre of the repeated measurements. The standard
+deviation describes how much the measurements vary around their mean. A small
+standard deviation means that the repeated measurements were similar; a larger
+standard deviation means they differed more.
+
+Variance is another measure of spread. It is the square of the standard
+deviation. Standard deviation is measured in grams, whereas variance is
+measured in squared grams (g^2^).
+
+```{r}
+chosen_summary <- chosen_measurements |>
+  summarise(
+    n_measurements = n(),
+    mean_mass = mean(heart_mass_g),
+    sd_mass = sd(heart_mass_g),
+    variance_mass = var(heart_mass_g)
+  )
+
+chosen_summary
+```
+
+Discuss with your partner:
+
+1. What is your estimate of the mass of your chosen fish's heart?
+2. What does its standard deviation tell you about your repeated measurements?
+3. Why is the variance numerically much smaller than the standard deviation?
+
+## Summarise every recorded fish
+
+We can perform the same calculation separately for every fish. Instead of
+filtering to one fish, `group_by(fish_number)` asks R to apply the summary to
+each recorded fish number.
+
+::: {.callout-tip}
+### Build on your previous summary
+
+You do not need to type the whole summary again. Copy the code you used to
+summarise your chosen fish and paste it below that code in your script. Remove
+the `filter()` step, replace it with `group_by(fish_number)`, and save the result
+as `fish_summary`.
+:::
+
+```{r}
+fish_summary <- heart |>
+  group_by(fish_number) |>
+  summarise(
+    n_measurements = n(),
+    mean_mass = mean(heart_mass_g),
+    sd_mass = sd(heart_mass_g),
+    variance_mass = var(heart_mass_g)
+  )
+
+fish_summary
+```
+
+Examine the resulting data frame:
+
+1. What does one row represent now?
+2. How many fish are represented in the electronic dataset?
+3. Do all fish have the same number of recorded measurements?
+4. Which fish has the smallest standard deviation? Which has the largest?
+
+::: {.callout-tip collapse="true"}
+### Check
+
+The electronic dataset contains 21 fish. Twenty have six recorded measurements,
+and one has five.
+:::
+
+## Summarise the available class data
+
+The original rows are repeated measurements, but our biological subject is the
+fish. To describe differences among the recorded fish, we therefore summarise
+the fish means in `fish_summary`, rather than treating all repeated measurements
+as though they came from different fish.
+
+```{r}
+class_summary <- fish_summary |>
+  summarise(
+    n_fish = n(),
+    class_mean_mass = mean(mean_mass),
+    class_sd_mass = sd(mean_mass),
+    class_variance_mass = var(mean_mass)
+  )
+
+class_summary
+```
+
+The two standard deviations calculated in this activity describe different
+kinds of variation:
+
+* A standard deviation in `fish_summary` describes variation among repeated
+  measurements of one heart.
+* The standard deviation in `class_summary` describes variation in mean heart
+  mass among the recorded fish.
+
+Because some data sheets were unavailable, these values describe the available
+electronic records rather than every fish examined by the 2025 class.
+
+::: {.callout-tip collapse="true"}
+### Check
+
+For the supplied data, the mean of the 21 fish means is approximately 0.4594 g,
+and their standard deviation is approximately 0.0855 g.
+:::
+
+## Plot the measurements and fish means
+
+We create plots using `ggplot()`. The `aes()` function maps variables in the
+data to features of the plot. Here, fish number is mapped to the horizontal
+axis and heart mass to the vertical axis.
+
+We convert `fish_number` to a factor only inside the plot so R treats the fish
+numbers as labels rather than as positions on a continuous numerical scale.
+
+```{r}
+heart |>
+  ggplot(
+    aes(
+      x = factor(fish_number),
+      y = heart_mass_g
+    )
+  ) +
+  geom_jitter(
+    width = 0.10,
+    height = 0,
+    alpha = 0.45
+  ) +
+  labs(
+    x = "Fish number",
+    y = "Heart mass [g]"
+  ) +
+  theme_minimal()
+```
+
+`geom_jitter()` moves overlapping points a very small random distance along the
+horizontal axis so that we can see the individual measurements more clearly.
+The movement is only graphical; it does not change the fish numbers or measured
+masses.
+
+Next, add the mean for each fish as a larger red point.
+
+::: {.callout-tip}
+### Extend your previous plot
+
+Do not type the entire plot again. In your script, copy the plot code you just
+wrote and extend the copied version by adding the new `geom_point()` layer after
+`geom_jitter()`. The complete extended plot is shown below.
+:::
+
+```{r}
+heart |>
+  ggplot(
+    aes(
+      x = factor(fish_number),
+      y = heart_mass_g
+    )
+  ) +
+  geom_jitter(
+    width = 0.10,
+    height = 0,
+    alpha = 0.45
+  ) +
+  # ---- Add this block to show the fish means ----
+  geom_point(
+    data = fish_summary,
+    aes(y = mean_mass),
+    colour = "red",
+    size = 2.5
+  ) +
+  # ---- End of the added block ----
+  labs(
+    x = "Fish number",
+    y = "Heart mass [g]"
+  ) +
+  theme_minimal()
+```
+
+Discuss the plot:
+
+1. What do the small grey points represent?
+2. What do the larger red points represent?
+3. Which fish appears to have the largest mean heart mass? Which the smallest?
+4. Which fish appears to have the most variable repeated measurements?
+5. Can two fish have similar mean masses but different amounts of variation?
+
+## Plot the distribution of fish means
+
+A histogram shows the distribution of a numerical variable. Here, each
+observation in the histogram is the mean heart mass of one recorded fish.
+
+```{r}
+fish_summary |>
+  ggplot(aes(x = mean_mass)) +
+  geom_histogram(
+    bins = 8,
+    colour = "white"
+  ) +
+  labs(
+    x = "Mean heart mass [g]",
+    y = "Number of fish"
+  ) +
+  theme_minimal()
+```
+
+Use the histogram to answer these questions:
+
+1. Around what heart mass are most of the recorded fish located?
+2. What are the approximate smallest and largest fish means?
+3. Does the distribution appear roughly symmetric, or is one tail longer?
+4. Why does the histogram contain 21 values rather than 125?
+
+## Summary
+
+In this activity, you:
+
+1. imported measurements from an Excel workbook;
+2. selected and renamed variables;
+3. selected a recorded fish from the 2025 class and filtered its measurements;
+4. calculated means, standard deviations, variances, and sample sizes;
+5. used `group_by()` to repeat a summary for every recorded fish; and
+6. visualised both the repeated measurements and the distribution of fish
+   means.
