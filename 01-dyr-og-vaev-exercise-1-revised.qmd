@@ -50,8 +50,8 @@ This will take a minute or two to download and install the relevant R packages a
 
 ## Open the activity and create your script
 
-Locate the Files pane; it should be in the lower right portion of the screen.
-Open this `.qmd` file in the downloaded project; the file will open above the Console. Look carefully at this window and you'll see a light blue arrow next to the word **Render**. Next this you'll see a small gear or cog icon that looks a bit like this ⚙️. Locate this ⚙️ button and click it. Select the option **Preview in Viewer Pane**. Then click **Render**. The
+tLocate the Files pane; it should be in the lower right portion of the screen.
+Open the `01-dyr-og-vaev-exercise-1-revised.qmd` file; the file is opened by clicking on its name in the **Files** pane. The file will open in a window above the Console. Look carefully at this window and you'll see a light blue arrow next to the word **Render**. Next this you'll see a small gear or cog icon that looks a bit like this ⚙️. Locate this ⚙️ button and click it. Select the option **Preview in Viewer Pane**. Then click **Render**. The
 rendered activity will open in RStudio's Viewer pane which will pop up where the Files pane used to be. Use that page as your
 instruction sheet.
 
